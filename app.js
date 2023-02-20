@@ -3,7 +3,6 @@
 var express = require( 'express' ),
     bodyParser = require( 'body-parser' ),
     ejs = require( 'ejs' ),
-    request = require( 'request' ),
     session = require( 'express-session' ),
     app = express();
 
@@ -17,6 +16,9 @@ app.set( 'views', __dirname + '/views' );
 app.set( 'view engine', 'ejs' );
 
 //. env values
+var settings_auth0_client_id = 'AUTH0_CLIENT_ID' in process.env ? process.env.AUTH0_CLIENT_ID : ''; 
+var settings_auth0_client_secret = 'AUTH0_CLIENT_SECRET' in process.env ? process.env.AUTH0_CLIENT_SECRET : ''; 
+var settings_auth0_callback_url = 'AUTH0_CALLBACK_URL' in process.env ? process.env.AUTH0_CALLBACK_URL : ''; 
 var settings_auth0_domain = 'AUTH0_DOMAIN' in process.env ? process.env.AUTH0_DOMAIN : ''; 
 var settings_auth0_management_client_id = 'AUTH0_MANAGEMENT_CLIENT_ID' in process.env ? process.env.AUTH0_MANAGEMENT_CLIENT_ID : ''; 
 var settings_auth0_management_client_secret = 'AUTH0_MANAGEMENT_CLIENT_SECRET' in process.env ? process.env.AUTH0_MANAGEMENT_CLIENT_SECRET : ''; 
@@ -39,7 +41,6 @@ var strategy = new Auth0Strategy({
   clientSecret: settings_auth0_client_secret,
   callbackURL: settings_auth0_callback_url
 }, function( accessToken, refreshToken, extraParams, profile, done ){
-  //console.log( accessToken, refreshToken, extraParams, profile );
   profile.idToken = extraParams.id_token;
   return done( null, profile );
 });
@@ -126,7 +127,7 @@ app.post( '/image', async function( req, res ){
 
   try{
     if( req.user ){ 
-      var user_id = req.user.id; //name: req.user.nickname, email: req.user.displayName, image_url: req.user.picture };
+      var user_id = req.user.id;
 
       var nickname = req.body.nickname;
       var picture = req.body.picture;
@@ -137,7 +138,6 @@ app.post( '/image', async function( req, res ){
         if( picture ){ metadata.picture = picture; }
         console.log( { metadata } );
 
-        //auth0.users.updateUserMetadata( params, metadata, function( err, user ){
         auth0.users.update( params, metadata, function( err, user ){
           if( err ){
             console.log( { err } );
@@ -170,41 +170,6 @@ app.post( '/image', async function( req, res ){
 });
 
 app.use( express.static( __dirname + '/public' ) );
-
-
-function timestamp2date( ts ){
-  if( ts ){
-    var dt = new Date( ts );
-    var yyyy = dt.getFullYear();
-    var mm = dt.getMonth() + 1;
-    var dd = dt.getDate();
-    var hh = dt.getHours();
-    var nn = dt.getMinutes();
-    var ss = dt.getSeconds();
-    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd 
-      + '<br/>' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
-    return datetime;
-  }else{
-    return "";
-  }
-}
-
-function timestamp2datetime( ts ){
-  if( ts ){
-    var dt = new Date( ts );
-    var yyyy = dt.getFullYear();
-    var mm = dt.getMonth() + 1;
-    var dd = dt.getDate();
-    var hh = dt.getHours();
-    var nn = dt.getMinutes();
-    var ss = dt.getSeconds();
-    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
-      + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
-    return datetime;
-  }else{
-    return "";
-  }
-}
 
 
 var port = process.env.PORT || 8080;
